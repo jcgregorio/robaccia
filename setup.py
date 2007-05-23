@@ -1,0 +1,37 @@
+from distutils.core import setup
+VERSION = '0.1.0'
+setup(name='robaccia',
+        version=VERSION, 
+        author='Joe Gregorio',
+        author_email='joe@bitworking.org',
+        url='http://bitworking.org/projects/robaccia/',
+        download_url='http://bitworking.org/projects/robaccia/dist/robaccia-%s.tar.gz' % VERSION,
+        description='A throw-away web framework.',
+        license='MIT',
+        long_description="""A throw-away web framework. Do not use.""",
+        packages=['robaccia'],
+        scripts=['bin/robaccia-admin'],
+        package_data={'robaccia': [
+            'templates/project/models/*',
+            'templates/project/views/*', 
+            'templates/project/templates/*', 
+            'templates/project/tests/*', 
+            'templates/project/log/*', 
+            'templates/project/*.py', 
+            'templates/addview/*', 
+            'templates/addmodelview/*', 
+            'templates/*.py', 
+            'templates/*.html', 
+            ]},
+        classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Web Environment',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Internet :: WWW/HTTP',
+        'Topic :: Software Development :: Libraries',
+        ],
+        )
+

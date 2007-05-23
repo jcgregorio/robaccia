@@ -1,0 +1,5 @@
+Just add files names test_*.py into this directory
+to add unit tests. Note that the files
+must contain classes derived from unittest.TestCase.
+
+

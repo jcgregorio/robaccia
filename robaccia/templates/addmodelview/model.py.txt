@@ -1,0 +1,8 @@
+from sqlalchemy import Table, Column, Integer, String
+import dbconfig
+
+table = Table('$name', dbconfig.metadata,
+        Column('id', Integer(), primary_key=True),
+        Column('description', String(250))
+        )
+

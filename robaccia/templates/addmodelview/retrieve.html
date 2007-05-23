@@ -1,0 +1,10 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/"  >
+    <head>
+        <title>fred</title> 
+    </head>
+    <body>
+        <p py:for="key, value in row.iteritems()">
+            <b>$key</b>: $value
+        </p>
+    </body>
+</html>
