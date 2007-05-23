@@ -44,8 +44,7 @@ def render(environ, start_response, template_file, vars, headers={}, status="200
 
 def form_parser(environ):
     """Parses the incoming x-www-form-urlencoded data into a dictionary"""
-    data = environ.get('wsgi.input', StringIO.StringIO("")).read()
-    return dict([(key, "".join(value)) for key, value in parse_qs(data).iteritems()])
+    return dict([(key, "".join(value)) for key, value in environ['formpostdata'].iteritems()])
 
 def deferred_collection(environ, start_response):
     """Look for a views.* module to handle this incoming
@@ -78,6 +77,11 @@ def http404(environ, start_response):
 def http304(environ, start_response):
     logging.getLogger('robaccia').info("304: %s" % environ.get('PATH_INFO', ''))
     start_response("304 Not Modified", [])
+    return []
+
+def http303(environ, start_response, location):
+    logging.getLogger('robaccia').info("303: %s" % environ.get('PATH_INFO', ''))
+    start_response("303 See Other", [('location', location)])
     return []
 
 def http405(environ, start_response):

@@ -1,0 +1,14 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/"  >
+    <head>
+        <title>fred</title> 
+    </head>
+    <body>
+        <form method="post" action="${row[primary]}">
+            <p py:for="key, value in row.iteritems()">
+            <input name="$key" value="$value"/>
+            </p>
+            <input type="hidden" name="_method" value="PUT"/>
+            <input type="submit" value="update"/>
+        </form>
+    </body>
+</html>

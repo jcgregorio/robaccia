@@ -43,7 +43,7 @@ See robaccia.render for a complete description.
 
 from wsgicollection import Collection
 import os
-from robaccia import http200, http405, http404
+from robaccia import http200, http405, http404, http303
 
 class DefaultModelCollection(Collection):
 
@@ -56,9 +56,9 @@ class DefaultModelCollection(Collection):
         self._repr = {}           # request representation as a dict()
 
     def __call__(self, environ, start_response):
+        response = Collection.__call__(self, environ, start_response)
         if environ['REQUEST_METHOD'] in ['PUT', 'POST']: 
             self._repr = self._parser(environ)
-        response = Collection.__call__(self, environ, start_response)
         if response == None:
             primary = self._model.primary_key.columns.keys()[0]
             view = environ['wsgiorg.routing_args'][1].get('view', '.')
@@ -76,21 +76,23 @@ class DefaultModelCollection(Collection):
                     data = dict(zip(result.keys, row))
                     return self._renderer(environ, start_response, template_file, {"row": data, "primary": primary}) 
                 elif method == 'PUT':
-                    self._model.update(self._model.c[primary]==self._id).execute(*(self._repr))
-                    return http200(environ, start_response)
+                    self._model.update(self._model.c[primary]==self._id).execute(self._repr)
+                    return http303(environ, start_response, self._id)
                 elif method == 'DELETE':
                     self._model.delete(self._model.c[primary]==self._id).execute()
                     return http200(environ, start_response)
                 else:
+                    print method
                     return http405(environ, start_response)
             else:
                 if method == 'GET':
                     result = self._model.select().execute()
+                    meta = self._model.columns.keys()
                     data = [dict(zip(result.keys, row)) for row in result.fetchall()]
-                    return self._renderer(environ, start_response, template_file, {"data": data, "primary": primary}) 
+                    return self._renderer(environ, start_response, template_file, {"data": data, "primary": primary, "meta": meta}) 
                 elif method == 'POST':
                     self._model.insert(self._repr).execute()
-                    return http200(environ, start_response)
+                    return http303(environ, start_response, ".")
         else:
             return response
 

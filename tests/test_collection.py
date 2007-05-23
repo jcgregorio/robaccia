@@ -289,7 +289,7 @@ class TestFormEncoded(unittest.TestCase):
 
     def test_form_url_encoded(self):
         from urllib import urlencode
-        request_body = StringIO(urlencode(dict(method="DELETE", data="some stuff")))
+        request_body = StringIO(urlencode(dict(_method="DELETE", data="some stuff")))
         environ = {
             "PATH_INFO": "/blog/",
             "REQUEST_METHOD": "POST",
@@ -303,7 +303,7 @@ class TestFormEncoded(unittest.TestCase):
 
     def test_form_url_encoded_content_length(self):
         from urllib import urlencode
-        rep = urlencode(dict(method="PUT", data="some stuff"))
+        rep = urlencode(dict(_method="PUT", data="some stuff"))
         request_body = StringIO(rep)
         environ = {
             "PATH_INFO": "/blog/",

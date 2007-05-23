@@ -154,8 +154,8 @@ class Collection(object):
         if method == "POST" and environ.get('CONTENT_TYPE', '').find('x-www-form-urlencoded') > 0:
             size = int(environ.get('CONTENT_LENGTH', "-1"))
             environ['formpostdata'] = cgi.parse_qs(environ['wsgi.input'].read(size)) 
-            if 'method' in environ['formpostdata'] and environ['formpostdata']['method'][0] in ['PUT', 'DELETE']:
-                method = environ['formpostdata']['method'][0]
+            if '_method' in environ['formpostdata'] and environ['formpostdata']['_method'][0] in ['PUT', 'DELETE']:
+                method = environ['formpostdata']['_method'][0]
                 info("wsgicollection: Rewrote request method to %s" % method)
 
         self._function_name = "%s_%s" % (method.lower(), self._noun)

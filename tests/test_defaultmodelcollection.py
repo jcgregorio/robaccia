@@ -64,11 +64,12 @@ class Test(unittest.TestCase):
                 urllib.urlencode({
                         "description": "First Post!"
                     })
-                )
+                ),
+            "CONTENT_TYPE": "application/x-www-form-urlencoded"
         }
         app(environ, self.start_response)
 
-        self.assertEqual(200, self.status)
+        self.assertEqual(303, self.status)
         self.assertEqual(None, self.template_file)
         self.assertEqual(None, self.environ)
 
@@ -94,7 +95,8 @@ class Test(unittest.TestCase):
                 urllib.urlencode({
                         "description": "Second Post!"
                     })
-                )
+                ),
+            "CONTENT_TYPE": "application/x-www-form-urlencoded"
         }
         app(environ, self.start_response)
 

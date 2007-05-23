@@ -1,0 +1,13 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/"  >
+    <head>
+        <title>fred</title> 
+    </head>
+    <body>
+        <form method="post" action="./">
+            <p py:for="key in meta">
+            <input name="$key" value=""/>
+            </p>
+            <input type="submit" value="Create"/>
+        </form>
+    </body>
+</html>

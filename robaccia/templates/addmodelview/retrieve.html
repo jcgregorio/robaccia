@@ -3,8 +3,10 @@
         <title>fred</title> 
     </head>
     <body>
+        <p><a href="./">Up</a></p>
         <p py:for="key, value in row.iteritems()">
             <b>$key</b>: $value
         </p>
+        <p><a href="${row[primary]};edit_form">Edit</a></p>
     </body>
 </html>

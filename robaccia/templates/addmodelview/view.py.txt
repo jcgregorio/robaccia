@@ -1,6 +1,6 @@
 from robaccia.defaultmodelcollection import DefaultModelCollection
 from robaccia import render, form_parser
-from models.$name import table
+from models.fred import table
 
 
 class Collection(DefaultModelCollection):
@@ -24,6 +24,17 @@ class Collection(DefaultModelCollection):
     # POST /{view}/
     def create(self, environ, start_response):
         pass
+
+    # GET /{view}/{id};edit_form
+    def get_edit_form(self, environ, start_response):
+        pass
+
+    # GET /{view}/{id};new_form
+    def get_new_form(self, environ, start_response):
+        pass
+
+
+
 
 app = Collection('html', render, form_parser, table)
 
