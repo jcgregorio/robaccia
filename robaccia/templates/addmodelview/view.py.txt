@@ -1,6 +1,6 @@
 from robaccia.defaultmodelcollection import DefaultModelCollection
 from robaccia import render, form_parser
-from models.fred import table
+from models.$name import table
 
 
 class Collection(DefaultModelCollection):

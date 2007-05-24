@@ -7,6 +7,11 @@
         <p py:for="key, value in row.iteritems()">
             <b>$key</b>: $value
         </p>
-        <p><a href="${row[primary]};edit_form">Edit</a></p>
+        <p><a href="${row[primary]};edit_form">Edit</a>
+        <form method="POST" action="${row[primary]}">
+            <input type="hidden" name="_method" value="DELETE"/>
+            <input type="submit" value="Delete"/>
+        </form> 
+        </p>
     </body>
 </html>

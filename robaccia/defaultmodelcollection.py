@@ -80,7 +80,7 @@ class DefaultModelCollection(Collection):
                     return http303(environ, start_response, self._id)
                 elif method == 'DELETE':
                     self._model.delete(self._model.c[primary]==self._id).execute()
-                    return http200(environ, start_response)
+                    return http303(environ, start_response, "./")
                 else:
                     print method
                     return http405(environ, start_response)

@@ -5,7 +5,9 @@
     <body>
         <form method="post" action="${row[primary]}">
             <p py:for="key, value in row.iteritems()">
-            <b>$key</b>: <input name="$key" value="$value"/>
+            <b>$key</b>: 
+                <input name="$key" value="$value" py:if="key != primary"  />
+                <i py:if="key == primary">$key</i>
             </p>
             <input type="hidden" name="_method" value="PUT"/>
             <input type="submit" value="update"/>

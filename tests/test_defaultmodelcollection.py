@@ -120,7 +120,7 @@ class Test(unittest.TestCase):
                 }),
         }
         app(environ, self.start_response)
-        self.assertEqual(200, self.status)
+        self.assertEqual(303, self.status)
         
         environ = {
             "REQUEST_METHOD": "GET",

@@ -5,7 +5,9 @@
     <body>
         <form method="post" action="./">
             <p py:for="key in meta">
-            <b>$key</b>: <input name="$key" value=""/>
+            <b>$key</b>: 
+                <input name="$key" value="" py:if="key != primary"  />
+                <i py:if="key == primary">$key</i>
             </p>
             <input type="submit" value="Create"/>
         </form>
