@@ -1,0 +1,228 @@
+#!/usr/bin/python
+import os
+import sys
+import shutil
+import robaccia
+import string
+
+sys.path.insert(0, os.getcwd())
+
+def runtests(args):
+    """robaccia runtests
+
+Run all the tests in the 'tests' directory.
+"""
+    import glob, unittest, os, sys
+    from trace import fullmodname
+
+    # try to start in a consistent, predictable location
+    sys.path.insert(0, os.getcwd())
+
+    # find all of the planet test modules
+    modules = map(fullmodname, glob.glob(os.path.join('tests', 'test_*.py')))
+
+    # load all of the tests into a suite
+    try:
+        suite = unittest.TestLoader().loadTestsFromNames(modules)
+    except Exception, exception:
+        # attempt to produce a more specific message
+        for module in modules: 
+            __import__(module)
+        raise
+
+    verbosity = 1
+    if "-q" in sys.argv or '--quiet' in sys.argv:
+        verbosity = 0
+    if "-v" in sys.argv or '--verbose' in sys.argv:
+        verbosity = 2
+
+    # run test suite
+    unittest.TextTestRunner(verbosity=verbosity).run(suite)
+
+def createproject(args):
+    """robaccia createproject <name>   
+
+Creates a new project directory structure.
+The target directory must not exist.
+    """
+    try:
+        name = args[0]
+    except:
+        sys.exit("Error: Missing required parameter <name>.")
+    if os.path.exists(name):
+        sys.exit("Error: Directory '%s' already exists" % name)
+    template_dir = os.path.abspath(os.path.join(robaccia.__file__, "..", "templates", "project"))
+    shutil.copytree(template_dir, name)
+
+def addview(args):
+    """robaccia addview <name>
+
+Add a new view to a project. Creates a defaultcollection
+and templates for the view.
+    """
+    try:
+        name = args[0]
+    except:
+        sys.exit("Error: Missing required parameter <name>.")
+    if not os.path.isdir("views"):
+        sys.exit("Can't find the sub-directory 'views'.")
+    if not os.path.isdir("templates"):
+        sys.exit("Can't find the sub-directory 'templates'.")
+    template_dir = os.path.abspath(os.path.join(robaccia.__file__, "..", "templates", "addview"))
+    src_dst = [
+        ([template_dir, "view.py"],       ["views", name + ".py"]),
+        ([template_dir, "list.html"],     ["templates", name, "list.html"]),
+        ([template_dir, "retrieve.html"], ["templates", name, "retrieve.html"])
+            ]   
+    src_dst = [(os.path.join(*src), os.path.join(*dst)) for (src, dst) in src_dst]
+
+    for (src, dst) in src_dst:
+        if os.path.exists(dst):
+            sys.exit("Error: Will not overwrite already existing file: '%s' already exists." % dst)
+    if not os.path.exists(os.path.join("templates", name)):
+        os.makedirs(os.path.join("templates", name))
+    for (src, dst) in src_dst:
+        print " created %s " % dst
+        shutil.copy(src, dst)
+
+def addmodelview(args):
+    """robaccia addmodelview <name>
+
+Add a new model and associated view to a project. Creates a defaultmodelcollection
+and templates for the view. Run 'robaccia createdb' after updating the created
+model file.
+    """
+    try:
+        name = args[0]
+    except:
+        sys.exit("Error: Missing required parameter <name>.")
+    if not os.path.isdir("views"):
+        sys.exit("Can't find the sub-directory 'views'.")
+    if not os.path.isdir("templates"):
+        sys.exit("Can't find the sub-directory 'templates'.")
+    template_dir = os.path.abspath(os.path.join(robaccia.__file__, "..", "templates", "addmodelview"))
+    src_dst = [
+        ([template_dir, "view.py.txt"],        ["views", name + ".py"], True),
+        ([template_dir, "model.py.txt"],       ["models", name + ".py"], True),
+        ([template_dir, "list.html"],          ["templates", name, "list.html"], False),
+        ([template_dir, "retrieve.html"],      ["templates", name, "retrieve.html"], False),
+        ([template_dir, "get_edit_form.html"], ["templates", name, "get_edit_form.html"], False),
+        ([template_dir, "get_new_form.html"],  ["templates", name, "get_new_form.html"], False)
+            ]   
+    src_dst = [(os.path.join(*src), os.path.join(*dst), expand) for (src, dst, expand) in src_dst]
+
+    for (src, dst, expand) in src_dst:
+        if os.path.exists(dst):
+            sys.exit("Error: Will not overwrite already existing file: '%s' already exists." % dst)
+    if not os.path.exists(os.path.join("templates", name)):
+        os.makedirs(os.path.join("templates", name))
+    for (src, dst, expand) in src_dst:
+        print " created %s " % dst
+        if not expand:
+            shutil.copy(src, dst)
+        else:
+            s = file(src, "r")
+            body = s.read()
+            s.close()
+            body = string.Template(body).substitute(name=name)
+            d = file(dst, "wb")
+            d.write(body)
+            d.close()
+
+ 
+def run(args):
+    """robaccia run           
+
+Start running the application under
+a local web server.
+"""
+    from dispatcher import app
+    robaccia.init_logging()
+    if os.environ.get("REQUEST_METHOD", ""):
+        from wsgiref.handlers import BaseCGIHandler
+        f = file("log", "a")
+        BaseCGIHandler(sys.stdin, sys.stdout, f, os.environ).run(app)
+        f.close()
+    else:
+        from wsgiref.simple_server import WSGIServer, WSGIRequestHandler 
+        httpd = WSGIServer(('', 3100), WSGIRequestHandler)
+        httpd.set_app(app)
+        print "Serving HTTP on %s port %s ..." % httpd.socket.getsockname()
+        httpd.serve_forever() 
+
+
+# Database commands ---------------------------------------
+
+def createdb(args):
+    """robaccia createdb
+
+Creates tables for all the models.
+"""
+    import sqlalchemy 
+    import glob
+    from trace import fullmodname
+    allmodels = [getattr(__import__(fullmodname(name), globals(), locals()), fullmodname(name).rsplit(".", 1)[1]) for name in glob.glob(os.path.join('models', '*.py')) if not os.path.basename(name).startswith("_")]
+    for model in allmodels:
+        for (name, table) in vars(model).iteritems():
+            if isinstance(table, sqlalchemy.Table):
+                table.create(checkfirst=True) 
+
+
+# Meta commands -------------------------------------------
+
+def commands(args):
+    """robaccia commands     
+    
+List all known commands that robaccia knows.
+"""
+    for name in members:
+        if not name.startswith("_") and callable(members[name]):
+            print members[name].__doc__.splitlines()[0]
+    
+
+def help(args):
+    """robaccia help
+
+Robaccia -- Command line tool for the robaccia web framework.
+http://bitworking.org/projects/robaccia/
+
+Basic commands:
+
+    robaccia createproject     create a new project directory
+
+    robaccia addview           add a view to the project
+    robaccia addmodelview      add a model and view to the project
+
+    robaccia run               launch the project under local web server 
+
+    robaccia help <cmd>        more help on the <cmd> command 
+    robaccia commands          list all commands
+
+"""
+    try:
+        name = args[0]
+    except:
+        name = "help"
+    if name in members:
+        print members[name].__doc__
+    else:
+        print "Robaccia -- Command line tool for the robaccia web framework."
+        print "http://bitworking.org/projects/robaccia/"
+        print 
+        print "Error: '%s' is not a valid command" % name
+    
+
+members = globals()
+
+if __name__ == "__main__":
+    try:
+        cmd = sys.argv[1]
+    except:
+        cmd = "help"
+    args = sys.argv[2:]
+    if cmd not in members or cmd.startswith("_") or (not callable(members[cmd])):
+        cmd = "help"
+
+    members[cmd](args)
+
+
