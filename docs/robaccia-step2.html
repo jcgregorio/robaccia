@@ -66,17 +66,11 @@ application should consist of the following steps:</p>
 
 <pre>
     $ robaccia createproject myproject 
-
     $ cd myproject 
-
-    $ robaccia addmodelview employees <i># Creates a view, templates, and a model all tied together.</i>
-
-    $ gvim ./models/employees.py      <i># Add in the fields we want our table to have.</i>
-
+    $ robaccia addmodelview employees <i># Creates  view, templates, and model.</i>
+    $ gvim ./models/employees.py      <i># Add table columns.</i>
     $ robaccia createdb
-
     $ robaccia run
-
     $ firefox http://localhost:8080/employees/
 </pre>
 
@@ -88,9 +82,7 @@ should be as simple as:
 
 <pre>
     $ robaccia addview employees
-
     $ robaccia run
-
     $ firefox http://localhost:8080/employees/
 </pre>
 
@@ -151,7 +143,7 @@ models/<b>name</b>.py
 templates/<b>name</b>/list.html
 templates/<b>name</b>/retrieve.html
 ...
-logs
+logs/
 </pre>
 
 <p>
@@ -167,7 +159,7 @@ logs
 </p>
 
 <p>
-  In general, using the notation of WSGIDispatcher, we are looking at URIs 
+  In general, using the notation of selector, we are looking at URIs 
   of the form:
   </p>
 
@@ -192,7 +184,7 @@ instances of those classes a WSGI application:
 
 <pre><code><span class="PreProc">from</span> wsgicollection <span class="PreProc">import</span> Collection
 
-<span class="Statement">class</span> <span class="Identifier">RecipeCollection</span>(Collection):
+<span class="Statement">class</span> <span class="Identifier">People</span>(Collection):
 
     <span class="Comment"># GET /people/</span>
     <span class="Statement">def</span> <span class="Identifier">list</span>(environ, start_response):
@@ -227,7 +219,7 @@ URI template:
 
 <p>That is, each {view} represents a collection, and {view}/{id} is a member
 of that collection. That's very simple and we have introduced a number of 
-constraints with this URI structure:
+constraints by restricting ourselves to this URI structure:
 </p>
 
 <dl>
@@ -298,14 +290,12 @@ for wsgicollection and wsgidispatcher.
 
 <p>
 Now let's create a <code>setup.py</code> so our new module can be installed.
-</p>
-
-<p>This uses the built-in <a href="http://docs.python.org/lib/module-distutils.html">distutils</a> library, and the configuration
+This uses the built-in <a href="http://docs.python.org/lib/module-distutils.html">distutils</a> library, and the configuration
   file is really a Python program.
 </p>
 
 <pre>
-[<a href="setup.py">setup.py</a>]
+[<a href="http://robaccia.googlecode.com/svn/trunk/setup.py">setup.py</a>]
 </pre>
 
 <p>
@@ -313,26 +303,21 @@ Note that this setup file not only installs the robaccia library, but
 also the 'robaccia-admin' program.
 </p>
 
-<p>
-Now let's start filling out our scenario above by adding the
-'createproject' command to the 'robaccia-admin' program.
-</p>
-
 <h4>robaccia-admin</h4>
 
 <p>
-So we want to create a program that I can run that takes 
+We want to create a program that we can run that takes 
 commands as arguments, just like 'svn' or 'bzr'. In addition we
 want help, and also, like 'bzr', a way to make the
-command set extensible. At the very least, I want to make
+command set extensible. At the very least, we want to make
 adding new command to 'robaccia-admin' easy. The simplest thing
 that could possibly work is to have the command name 
 match a method name in the module, and just look them up 
 on the fly. 
 </p>
 
-<pre><code>
-members = globals()
+<h3><tt>robaccia-bin</tt></h3>
+<pre><code>members = globals()
 
 <span class="Statement">if</span> __name__ == &quot;<span class="Constant">__main__</span>&quot;:
     <span class="Statement">try</span>:
@@ -356,8 +341,7 @@ a longer help description for when we want help on a single command.
 Also, I don't want to write a separate help file.
 </p>
 
-<p>
-If the first thing in your method is a string, then that
+<p>In Python if the first thing in your method is a string, then that
 string is available via the __doc__ attribute. We'll put in place
 a convention that the first line of the doc string is a short
 description, and the whole doc string will be used for help
@@ -366,15 +350,14 @@ for the 'commands' command. Run 'robaccia-admin commands' to get a list
 of all the commands that the robaccia program supports. 
 </p>
 
-<pre><code>
-<span class="Statement">def</span> <span class="Identifier">commands</span>(args):
+<h3><tt>robaccia-bin</tt></h3>
+<pre><code><span class="Statement">def</span> <span class="Identifier">commands</span>(args):
     &quot;&quot;&quot;<span class="Constant">robaccia commands     </span>
 <span class="Constant">    </span>
 <span class="Constant">List all known commands that robaccia knows.</span>
 &quot;&quot;&quot;
     <span class="Statement">for</span> name <span class="Statement">in</span> members:
-        <span class="Statement">if</span> <span class="Statement">not</span> name.startswith(&quot;<span class="Constant">_</span>&quot;) 
-                  <span class="Statement">and</span> callable(members[name]):
+        <span class="Statement">if</span> <span class="Statement">not</span> name.startswith(&quot;<span class="Constant">_</span>&quot;) <span class="Statement">and</span> callable(members[name]):
             <span class="Statement">print</span> members[name].__doc__.splitlines()[0]
 </code></pre>
 
@@ -390,8 +373,8 @@ a __file__ attribute which is the location of the source file, and
 we will use that to construct a path to the template files.
 </p>
 
-<pre><code>
-<span class="Statement">def</span> <span class="Identifier">createproject</span>(args):
+<h3><tt>robaccia-bin</tt></h3>
+<pre><code><span class="Statement">def</span> <span class="Identifier">createproject</span>(args):
     <span class="Normal">&quot;&quot;&quot;</span><span class="Constant">robaccia createproject &lt;name&gt;   </span>
 
 <span class="Constant">Creates a new project directory structure.</span>
@@ -403,7 +386,9 @@ we will use that to construct a path to the template files.
         sys.exit(<span class="Normal">&quot;</span><span class="Constant">Error: Missing required parameter &lt;name&gt;.</span><span class="Normal">&quot;</span>)
     <span class="Statement">if</span> os.path.exists(name):
         sys.exit(<span class="Normal">&quot;</span><span class="Constant">Error: Directory '%s' already exists</span><span class="Normal">&quot;</span> % name)
-    template_dir = os.path.abspath(os.path.join(robaccia.__file__, <span class="Normal">&quot;</span><span class="Constant">..</span><span class="Normal">&quot;</span>, <span class="Normal">&quot;</span><span class="Constant">templates</span><span class="Normal">&quot;</span>, <span class="Normal">&quot;</span><span class="Constant">project</span><span class="Normal">&quot;</span>))
+    template_dir = os.path.abspath(
+       os.path.join(robaccia.__file__, <span class="Normal">&quot;</span><span class="Constant">..</span><span class="Normal">&quot;</span>, <span class="Normal">&quot;</span><span class="Constant">templates</span><span class="Normal">&quot;</span>, <span class="Normal">&quot;</span><span class="Constant">project</span><span class="Normal">&quot;</span>)
+    )
     shutil.copytree(template_dir, name)
 </code></pre>
 
@@ -437,11 +422,12 @@ urls.add(<span class="Normal">'</span><span class="Constant">/blog/{id}/</span><
 
 <p>WSGICollection helps by adding an idiom and removing the need
 to map each request URI and method to a WSGI application, but we 
-can do even more. We can take <code>robaccia.render()</code>
+can do better. We can take <code>robaccia.render()</code>
 and presume that every renderer will conform to that signature. 
 Since we have a convention for how files will be laid out, we can
 do even more work, we can look up the template to render using
-the name of the WSGICollection that was called, the name of the function.
+the name of the WSGICollection that was called, and the name of the 
+member function that was called.
 The only piece of information we are missing is the file extension
 of the template, so we will have to pass that in also.
 </p>
@@ -474,8 +460,8 @@ passed into the templating engine.
 <p>Here is the implementation for DefaultCollection, which implements the above design:
 </p>
 
-<pre><code>
-<span class="PreProc">from</span> wsgicollection <span class="PreProc">import</span> Collection
+<h3><tt>defaultcollection.py</tt></h3>
+<pre><code><span class="PreProc">from</span> wsgicollection <span class="PreProc">import</span> Collection
 <span class="PreProc">import</span> os
 
 <span class="Statement">class</span> <span class="Identifier">DefaultCollection</span>(Collection):
@@ -554,8 +540,8 @@ way to run our application. Since we based Robaccia on WSGI we can use
 purposes.
 </p>
 
-<pre><code>
-<span class="Statement">def</span> <span class="Identifier">run</span>(args):
+<h3><tt>robaccia-admin</tt></h3>
+<pre><code><span class="Statement">def</span> <span class="Identifier">run</span>(args):
     <span class="Normal">&quot;&quot;&quot;</span><span class="Constant">robaccia run           </span>
 
 <span class="Constant">Start running the application under</span>
@@ -575,8 +561,8 @@ The last piece of the puzzle is how dispatcher.py routes the incoming
 requests to the right view.
 </p>
 
-<pre><code>
-<span class="PreProc">from</span> robaccia.wsgidispatcher <span class="PreProc">import</span> Dispatcher
+<h3><tt>dispatcher.py</tt></h3>
+<pre><code><span class="PreProc">from</span> robaccia.wsgidispatcher <span class="PreProc">import</span> Dispatcher
 <span class="PreProc">from</span> robaccia <span class="PreProc">import</span> deferred_collection
 
 app = Dispatcher()
@@ -591,8 +577,8 @@ app.add(<span class="Normal">'</span><span class="Constant">/{view:alnum}/[{id:u
 
 <p>It's <tt>deferred_collection</tt> that does our lookup of the view to call.</p>
 
-<pre><code>
-<span class="Statement">def</span> <span class="Identifier">deferred_collection</span>(environ, start_response):
+<h3><tt>deferred_collection()</tt></h3>
+<pre><code><span class="Statement">def</span> <span class="Identifier">deferred_collection</span>(environ, start_response):
     <span class="Normal">&quot;&quot;&quot;</span><span class="Constant">Look for a views.* module to handle this incoming</span>
 <span class="Constant">    request. Presumes the module has </span>
 <span class="Constant">    an 'app' that is a WSGI application.</span><span class="Normal">&quot;&quot;&quot;</span>
@@ -653,15 +639,14 @@ we will add in a model, and some template code for adding and editing
 collection members.
 </p>
 
-<p>The handling of templates is no difference from DefaultCollection, we just
-now need to add in some handling for the model. DefaultModelCollection 
+<p>DefaultModelCollection 
 does everything that DefaultCollection does, but now we have a 'model'
-to keep track of, and those dictionaries are coming from that model
-into templates. We will also need a way to parse incoming request
+to keep track of. Those dictionaries are going from the model
+into templates. There is also a way to parse incoming request bodies.
 </p>
-
-<pre><code>
-<span class="PreProc">from</span> wsgicollection <span class="PreProc">import</span> Collection
+  
+<h3><tt>defaultmodelcollection.py</tt></h3>
+<pre><code><span class="PreProc">from</span> wsgicollection <span class="PreProc">import</span> Collection
 <span class="PreProc">import</span> os
 <span class="PreProc">from</span> robaccia <span class="PreProc">import</span> http200, http405, http404, http303
 
@@ -685,18 +670,22 @@ into templates. We will also need a way to parse incoming request
             template_file = os.path.join(view, self._function_name + <span class="Normal">&quot;</span><span class="Constant">.</span><span class="Normal">&quot;</span> + self._ext)
             method = environ.get(<span class="Normal">'</span><span class="Constant">REQUEST_METHOD</span><span class="Normal">'</span>, <span class="Normal">'</span><span class="Constant">GET</span><span class="Normal">'</span>)
             <span class="Statement">if</span> self._id:
-                <span class="Statement">if</span> method == <span class="Normal">&quot;</span><span class="Constant">POST</span><span class="Normal">&quot;</span> <span class="Statement">and</span> <span class="Normal">&quot;</span><span class="Constant">_method</span><span class="Normal">&quot;</span> <span class="Statement">in</span> self._repr <span class="Statement">and</span> self._repr[<span class="Normal">&quot;</span><span class="Constant">_method</span><span class="Normal">&quot;</span>] <span class="Statement">in</span> [<span class="Normal">&quot;</span><span class="Constant">PUT</span><span class="Normal">&quot;</span>, <span class="Normal">&quot;</span><span class="Constant">DELETE</span><span class="Normal">&quot;</span>]:
+                <span class="Statement">if</span> method == <span class="Normal">&quot;</span><span class="Constant">POST</span><span class="Normal">&quot;</span> <span class="Statement">and</span> <span class="Normal">&quot;</span><span class="Constant">_method</span><span class="Normal">&quot;</span> <span class="Statement">in</span> 
+                    self._repr <span class="Statement">and</span> self._repr[<span class="Normal">&quot;</span><span class="Constant">_method</span><span class="Normal">&quot;</span>] <span class="Statement">in</span> [<span class="Normal">&quot;</span><span class="Constant">PUT</span><span class="Normal">&quot;</span>, <span class="Normal">&quot;</span><span class="Constant">DELETE</span><span class="Normal">&quot;</span>]:
                     method = self._repr[<span class="Normal">&quot;</span><span class="Constant">_method</span><span class="Normal">&quot;</span>]
                     <span class="Statement">del</span> self._repr[<span class="Normal">&quot;</span><span class="Constant">_method</span><span class="Normal">&quot;</span>]
                 <span class="Statement">if</span> method == <span class="Normal">'</span><span class="Constant">GET</span><span class="Normal">'</span>:
-                    result = self._model.select(self._model.c[primary]==self._id).execute()
+                    result = self._model.select(self._model.c[primary]==self._id
+                       ).execute()
                     row = result.fetchone()
                     <span class="Statement">if</span> None == row:
                         <span class="Statement">return</span> http404(environ, start_response)
                     data = dict(zip(result.keys, row))
-                    <span class="Statement">return</span> self._renderer(environ, start_response, template_file, {<span class="Normal">&quot;</span><span class="Constant">row</span><span class="Normal">&quot;</span>: data, <span class="Normal">&quot;</span><span class="Constant">primary</span><span class="Normal">&quot;</span>: primary})
+                    <span class="Statement">return</span> self._renderer(environ, start_response, template_file, 
+                          {<span class="Normal">&quot;</span><span class="Constant">row</span><span class="Normal">&quot;</span>: data, <span class="Normal">&quot;</span><span class="Constant">primary</span><span class="Normal">&quot;</span>: primary})
                 <span class="Statement">elif</span> method == <span class="Normal">'</span><span class="Constant">PUT</span><span class="Normal">'</span>:
-                    self._model.update(self._model.c[primary]==self._id).execute(self._repr)
+                    self._model.update(self._model.c[primary]==self._id
+                        ).execute(self._repr)
                     <span class="Statement">return</span> http303(environ, start_response, self._id)
                 <span class="Statement">elif</span> method == <span class="Normal">'</span><span class="Constant">DELETE</span><span class="Normal">'</span>:
                     self._model.delete(self._model.c[primary]==self._id).execute()
@@ -709,7 +698,8 @@ into templates. We will also need a way to parse incoming request
                     result = self._model.select().execute()
                     meta = self._model.columns.keys()
                     data = [dict(zip(result.keys, row)) <span class="Statement">for</span> row <span class="Statement">in</span> result.fetchall()]
-                    <span class="Statement">return</span> self._renderer(environ, start_response, template_file, {<span class="Normal">&quot;</span><span class="Constant">data</span><span class="Normal">&quot;</span>: data, <span class="Normal">&quot;</span><span class="Constant">primary</span><span class="Normal">&quot;</span>: primary, <span class="Normal">&quot;</span><span class="Constant">meta</span><span class="Normal">&quot;</span>: meta})
+                    <span class="Statement">return</span> self._renderer(environ, start_response, template_file, 
+                       {<span class="Normal">&quot;</span><span class="Constant">data</span><span class="Normal">&quot;</span>: data, <span class="Normal">&quot;</span><span class="Constant">primary</span><span class="Normal">&quot;</span>: primary, <span class="Normal">&quot;</span><span class="Constant">meta</span><span class="Normal">&quot;</span>: meta})
                 <span class="Statement">elif</span> method == <span class="Normal">'</span><span class="Constant">POST</span><span class="Normal">'</span>:
                     self._model.insert(self._repr).execute()
                     <span class="Statement">return</span> http303(environ, start_response, <span class="Normal">&quot;</span><span class="Constant">.</span><span class="Normal">&quot;</span>)
@@ -719,11 +709,11 @@ into templates. We will also need a way to parse incoming request
 </code></pre>
 
 <p>Note that the constructor takes a renderer, a parser, and a model.
-   The rendered takes dictionaries and turns them into response bodies.
+   The renderer takes dictionaries and turns them into response bodies.
    The parser takes incoming request bodies and turns them 
    into dictionaries. We already have an HTML renderer, all we need to do
    form processing is something that takes incoming 'application/x-www-form-urlencoded'
-   data and converts it into a dictionary, which is luckily easy to come by.
+   data and converts it into a dictionary, which is easy to come by.
 </p>
 
 <p>We need to update our 'view' to handle the 'edit' and 'new' forms, which
@@ -731,8 +721,8 @@ just means adding 'get_edit_form()' and 'get_new_form()' functions to the
 view. The templates are also pretty simple. Here is the updated
 'list.html':</p>
 
-<pre><code>
-<span class="Identifier">&lt;</span><span class="Statement">html</span><span class="Identifier"> xmlns=</span><span class="Constant">&quot;<a href="http://www.w3.org/1999/xhtml">http://www.w3.org/1999/xhtml</a>&quot;</span><span class="Identifier"> xmlns:py=</span><span class="Constant">&quot;<a href="http://genshi.edgewall.org/">http://genshi.edgewall.org/</a>&quot;</span><span class="Identifier">  &gt;</span>
+<h3><tt>list.html</tt></h3>
+<pre><code><span class="Identifier">&lt;</span><span class="Statement">html</span><span class="Identifier"> xmlns=</span><span class="Constant">&quot;<a href="http://www.w3.org/1999/xhtml">http://www.w3.org/1999/xhtml</a>&quot;</span><span class="Identifier"> xmlns:py=</span><span class="Constant">&quot;<a href="http://genshi.edgewall.org/">http://genshi.edgewall.org/</a>&quot;</span><span class="Identifier">  &gt;</span>
     <span class="Identifier">&lt;</span><span class="Statement">head</span><span class="Identifier">&gt;</span>
 <span class="PreProc">        </span><span class="Identifier">&lt;</span><span class="Statement">title</span><span class="Identifier">&gt;</span><span class="Title">Fred</span><span class="Identifier">&lt;/</span><span class="Statement">title</span><span class="Identifier">&gt;</span><span class="PreProc"> </span>
 <span class="PreProc">    </span><span class="Identifier">&lt;/</span><span class="Statement">head</span><span class="Identifier">&gt;</span>
@@ -783,21 +773,21 @@ joe@joe-laptop:~/myprj$ <b>robaccia-admin run</b>
 <i>Serving HTTP on 0.0.0.0 port 3100 ...</i>
 </pre>
 
-<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-new.png" alt="Web page: New"/></p>
 
 <p>The database is initially empty.  Click on New to create a new member in the collection.  </p>
-<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-new-form.png" alt="Web page: Form for creating a new employee"/></p>
+<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-new.png" alt="Web page: New"/></p>
 <p>Creating a new employee.</p>
-<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-list.png" alt="Web page: List of two added employees"/></p>
+<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-new-form.png" alt="Web page: Form for creating a new employee"/></p>
 <p>Our collection list afer adding couple new employees. Note the link to individual employees.</p>
-<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-retrieve.png" alt="Web page: A single employee"/></p>
+<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-list.png" alt="Web page: List of two added employees"/></p>
 <p>From an individual collection member we can edit and delete the employee.</p>
-<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-edit-form.png" alt="Web page: Editing a single employee"/></p>
+<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-retrieve.png" alt="Web page: A single employee"/></p>
 <p>A form for editing the employee.</p>
+<p><img src="http://bitworking.org/images/2007/05/robaccia-employees-edit-form.png" alt="Web page: Editing a single employee"/></p>
 
 <h3>Lessons</h3>
 
-<p>We came up with a really database to web framework, but in reality
+<p>We came up with a rather simple database to web framework, but in reality
  haven't lost any flexibility over the original Robaccia. All the pieces 
  of URI dispatching, views and templates are present, all we did
  was pave the happy path.
@@ -820,21 +810,21 @@ joe@joe-laptop:~/myprj$ <b>robaccia-admin run</b>
 
 <h3>Observations</h3>
 
-<p>The code so far had renderers and parsers for HTML and
+<p>The code so far has renderers and parsers for HTML and
 HTML forms, but we could easily add support for JSON or Atom.
 </p>
 
 <p>There isn't much that ties us to SQLAlchemy; just DefaultModelDispatcher
 and the initial files put down by 'robaccia addmodelview'. We could easily 
-switch out to another ORM, or even, drop the RDBMS and move to another
+switch out to another ORM, or even drop the RDBMS and move to another
 kind of data store.
 </p>
 
-<p>There is a whole slew of stuff that hasn't been done, like 
+<p>There is a whole slew of stuff that hasn't been done like 
    handling changes to the database, deployment, security,  
    large collections that require paging, etc. Those are all solvable
-   problems, and not the point of this exercise, which was to show 
-   how you can apply constraints to reduce cognitive and manual 
+   problems, and not the point of this exercise, which was to 
+   demonstrate applying constraints to reduce cognitive and manual 
   load to create a Rails/Django-like web framework. 
 </p>
 
