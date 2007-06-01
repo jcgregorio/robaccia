@@ -91,8 +91,8 @@ class DefaultModelCollection(Collection):
                     data = [dict(zip(result.keys, row)) for row in result.fetchall()]
                     return self._renderer(environ, start_response, template_file, {"data": data, "primary": primary, "meta": meta}) 
                 elif method == 'POST':
-                    self._model.insert(self._repr).execute()
-                    return http303(environ, start_response, ".")
+                    results = self._model.insert(self._repr).execute()
+                    return http303(environ, start_response, str(results.last_inserted_ids()[0]))
         else:
             return response
 
