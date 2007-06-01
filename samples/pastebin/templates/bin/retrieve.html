@@ -14,6 +14,7 @@
     </head>
     <body>
         <p><a href="./">Up</a></p>
+        <h3>${row['filename']}</h3>
         <div>${HTML(highlight(row['code'], lexer, HtmlFormatter(linenos='inline')))}
         </div>
         <p>

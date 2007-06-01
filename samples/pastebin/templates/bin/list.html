@@ -9,6 +9,10 @@
         <h1>Pastebin</h1>
         <form method="post" action="./">
             <p>
+            <label for="filename">Filename</label><br/>
+            <input name="filename" id="filename" value=""/>
+            </p>
+            <p>
             <label for="code">Code</label><br/>
             <textarea cols="80" rows="20" name="code" id="code" value=""></textarea>
             </p>
@@ -20,5 +24,11 @@
             </p>
             <input type="submit" value="Create"/>
         </form>
+        <hr/>
+        <ol>
+        <li py:for="row in data">
+          <a href="${row[primary]}">${row['filename']}</a>
+        </li>
+        </ol>
     </body>
 </html>
