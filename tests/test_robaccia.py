@@ -6,6 +6,7 @@ from subprocess import Popen, PIPE
 import shutil
 
 SCRATCH = os.path.abspath(os.path.join("tests", "output"))
+BASE = os.path.abspath(".")
 FRED = """
 def app(environ, start_response):
     start_response("200 Ok", [])
@@ -76,4 +77,9 @@ class Test(unittest.TestCase):
         os.chdir("..")
 
 
-
+    def test_render_template_paths(self):
+        os.chdir(BASE)
+        self.assertEqual(['{"a": 1}'], robaccia.render({}, self._start_response, 'list.json', {'a':1}))
+        robaccia.TEMPLATE_DIRS = [os.path.join("tests", "input", "templates")]
+        self.assertEqual(['<html><body><p>Hello World!</p></body></html>'], robaccia.render({}, self._start_response, 'list.html', {'a':1}, raw_etag="foo"))
+        

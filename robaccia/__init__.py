@@ -7,18 +7,41 @@ from genshi.template import TemplateLoader
 from cgi import parse_qs
 import StringIO
 
+TEMPLATE_DIRS = ["templates"]
+
+def genshi_templater(template_dir_paths, template_file, vars, serialization):
+    loader = TemplateLoader(template_dir_paths)
+    tmpl = loader.load(template_file)
+    stream = tmpl.generate(**vars)
+    body = stream.render(method=serialization)
+    return body
+
+def simplejson_templater(template_dir_paths, template_file, vars, serialization):
+    import simplejson
+    return simplejson.dumps(vars)
+
 extensions = {
-    'html': ('text/html; charset=utf-8', 'html'),
-    'atom': ('application/atom+xml; charset=utf-8', 'xml'),
-    'svc': ('application/atomsvc+xml; charset=utf-8', 'xml')
+    'html': ('text/html; charset=utf-8', 'html', genshi_templater),
+    'atom': ('application/atom+xml; charset=utf-8', 'xml', genshi_templater),
+    'svc': ('application/atomsvc+xml; charset=utf-8', 'xml', genshi_templater),
+    'json': ('application/json', 'json', simplejson_templater)
 }
 
+def find_template(template_file):
+    for dir in TEMPLATE_DIRS:
+        full_name = os.path.join(dir, template_file)
+        if os.path.exists(full_name) and os.path.isfile(full_name):
+            return full_name
+    return None
+
 def etag_from_raw_etag(raw_etag, template_file):
-    file=os.path.join("templates", template_file)
-    last_modified = str(os.stat(file).st_mtime)
-    hash = md5.new(raw_etag)
-    hash.update(last_modified)
-    return '"%s"' % hash.hexdigest()
+    file = find_template(template_file)
+    if file:
+        last_modified = str(os.stat(file).st_mtime)
+        hash = md5.new(raw_etag)
+        hash.update(last_modified)
+        return '"%s"' % hash.hexdigest()
+    return None
  
 def render(environ, start_response, template_file, vars, headers={}, status="200 Ok", raw_etag=None):
     if raw_etag:
@@ -27,16 +50,13 @@ def render(environ, start_response, template_file, vars, headers={}, status="200
         if etag == environ.get('HTTP_IF_NONE_MATCH', ''):
             return http304(environ, start_response)
 
-    (contenttype, serialization) = ('text/html; charset=utf-8', 'html')
+    (contenttype, serialization, templater) = ('text/html; charset=utf-8', 'html', genshi_templater)
     ext = template_file.rsplit(".")
     if len(ext) > 1 and (ext[1] in extensions):
-        (contenttype, serialization) = extensions[ext[1]]
-    
+        (contenttype, serialization, templater) = extensions[ext[1]]
+   
+    body = templater(TEMPLATE_DIRS, template_file, vars, serialization)
 
-    loader = TemplateLoader(["templates"])
-    tmpl = loader.load(template_file)
-    stream = tmpl.generate(**vars)
-    body = stream.render(method=serialization)
     if 'content-type' not in headers:
         headers['content-type'] = contenttype
     start_response(status, list(headers.iteritems()))
@@ -45,6 +65,14 @@ def render(environ, start_response, template_file, vars, headers={}, status="200
 def form_parser(environ):
     """Parses the incoming x-www-form-urlencoded data into a dictionary"""
     return dict([(key, "".join(value)) for key, value in environ['formpostdata'].iteritems()])
+
+def json_parser(environ):
+    import simplejson
+    size = int(environ.get('CONTENT_LENGTH', "-1"))
+    if size > 0:
+        return simplejson.loads(environ['wsgi.input'].read(size)) 
+    else:
+        return {}
 
 def deferred_collection(environ, start_response):
     """Look for a views.* module to handle this incoming
