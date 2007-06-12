@@ -83,3 +83,6 @@ class Test(unittest.TestCase):
         robaccia.TEMPLATE_DIRS = [os.path.join("tests", "input", "templates")]
         self.assertEqual(['<html><body><p>Hello World!</p></body></html>'], robaccia.render({}, self._start_response, 'list.html', {'a':1}, raw_etag="foo"))
         
+    def test_parse_json(self):
+        pass
+

@@ -1,5 +1,5 @@
 from robaccia.defaultmodelcollection import DefaultModelCollection
-from robaccia import render, form_parser
+import robaccia
 from models.$name import table
 
 
@@ -34,8 +34,6 @@ class Collection(DefaultModelCollection):
         pass
 
 
-
-
-app = Collection('html', render, form_parser, table)
+app = Collection('$repr_type', robaccia.find_renderer('$repr_type'), robaccia.find_parser('$repr_type'), table)
 
 

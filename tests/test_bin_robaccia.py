@@ -32,3 +32,19 @@ class Test(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join("myprj", "templates")))
         self.assertTrue(os.path.exists(os.path.join("myprj", "dispatcher.py")))
 
+    def test_add_views(self):
+        output = Popen([os.path.join("..", "..", "bin", "robaccia-admin"), "createproject", "myprj"], stdout=PIPE).communicate()[0]
+        os.chdir("myprj")
+        output = Popen([os.path.join("..", "..", "..", "bin", "robaccia-admin"), "addview", "fred", "--type=html"], stdout=PIPE).communicate()[0]
+        self.assertTrue(os.path.isdir("views"))
+        self.assertTrue(os.path.exists(os.path.join("views", "fred.py")))
+        self.assertTrue(os.path.exists(os.path.join("templates", "fred", "list.html")))
+        self.assertTrue(os.path.exists(os.path.join("templates", "fred", "retrieve.html")))
+
+        output = Popen([os.path.join("..", "..", "..", "bin", "robaccia-admin"), "addmodelview", "barney", "--type=html"], stdout=PIPE).communicate()[0]
+        self.assertTrue(os.path.isdir("models"))
+        self.assertTrue(os.path.exists(os.path.join("views", "barney.py")))
+        self.assertTrue(os.path.exists(os.path.join("models", "barney.py")))
+        self.assertTrue(os.path.exists(os.path.join("templates", "barney", "retrieve.html")))
+
+

@@ -61,7 +61,6 @@ class DefaultCollection(Collection):
         if isinstance(response, dict):
             view = environ['wsgiorg.routing_args'][1].get('view', '.')
             template_file = os.path.join(view, self._function_name + "." + self._ext)
-
             return self._renderer(environ, start_response, template_file, response) 
         else:
             return response

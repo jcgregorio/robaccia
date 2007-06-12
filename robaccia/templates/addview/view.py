@@ -1,5 +1,5 @@
 from robaccia.defaultcollection import DefaultCollection
-from robaccia import render
+import robaccia
 
 
 class Collection(DefaultCollection):
@@ -24,6 +24,6 @@ class Collection(DefaultCollection):
     def create(self, environ, start_response):
         pass
 
-app = Collection('html', render)
+app = Collection('$repr_type', robaccia.find_renderer('$repr_type'))
 
 

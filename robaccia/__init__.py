@@ -20,12 +20,30 @@ def simplejson_templater(template_dir_paths, template_file, vars, serialization)
     import simplejson
     return simplejson.dumps(vars)
 
+def form_parser(body):
+    """Parses the incoming x-www-form-urlencoded data into a dictionary"""
+    return dict([(key, "".join(value)) for key, value in parse_qs(body).iteritems()])
+
+def json_parser(body):
+    import simplejson
+    return simplejson.loads(body) 
+
+
 extensions = {
-    'html': ('text/html; charset=utf-8', 'html', genshi_templater),
-    'atom': ('application/atom+xml; charset=utf-8', 'xml', genshi_templater),
-    'svc': ('application/atomsvc+xml; charset=utf-8', 'xml', genshi_templater),
-    'json': ('application/json', 'json', simplejson_templater)
+    'html': ('text/html; charset=utf-8', 'html', genshi_templater, form_parser),
+#    'atom': ('application/atom+xml; charset=utf-8', 'xml', genshi_templater, atom_parser),
+#    'svc': ('application/atomsvc+xml; charset=utf-8', 'xml', genshi_templater, None),
+    'json': ('application/json', 'json', simplejson_templater, json_parser)
 }
+
+def find_parser(ext):
+    if ext in extensions:
+        return extensions[ext][3]
+    else:
+        return None
+
+def find_renderer(ext):
+    return render
 
 def find_template(template_file):
     for dir in TEMPLATE_DIRS:
@@ -53,7 +71,7 @@ def render(environ, start_response, template_file, vars, headers={}, status="200
     (contenttype, serialization, templater) = ('text/html; charset=utf-8', 'html', genshi_templater)
     ext = template_file.rsplit(".")
     if len(ext) > 1 and (ext[1] in extensions):
-        (contenttype, serialization, templater) = extensions[ext[1]]
+        (contenttype, serialization, templater, parser) = extensions[ext[1]]
    
     body = templater(TEMPLATE_DIRS, template_file, vars, serialization)
 
@@ -62,17 +80,6 @@ def render(environ, start_response, template_file, vars, headers={}, status="200
     start_response(status, list(headers.iteritems()))
     return [body]
 
-def form_parser(environ):
-    """Parses the incoming x-www-form-urlencoded data into a dictionary"""
-    return dict([(key, "".join(value)) for key, value in environ['formpostdata'].iteritems()])
-
-def json_parser(environ):
-    import simplejson
-    size = int(environ.get('CONTENT_LENGTH', "-1"))
-    if size > 0:
-        return simplejson.loads(environ['wsgi.input'].read(size)) 
-    else:
-        return {}
 
 def deferred_collection(environ, start_response):
     """Look for a views.* module to handle this incoming

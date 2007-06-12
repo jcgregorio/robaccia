@@ -56,9 +56,16 @@ class DefaultModelCollection(Collection):
         self._repr = {}           # request representation as a dict()
 
     def __call__(self, environ, start_response):
+
+        size = environ.get('CONTENT_LENGTH', '')
+        if size and self._parser:
+            size = int(size)
+            self._repr = self._parser(environ['wsgi.input'].read(size)) 
+            if environ['REQUEST_METHOD'] == "POST" and '_method' in self._repr and self._repr['_method'] in ['PUT', 'DELETE']:
+                environ['REQUEST_METHOD'] = self._repr['_method']
+
         response = Collection.__call__(self, environ, start_response)
-        if environ['REQUEST_METHOD'] in ['PUT', 'POST']: 
-            self._repr = self._parser(environ)
+
         if response == None:
             primary = self._model.primary_key.columns.keys()[0]
             view = environ['wsgiorg.routing_args'][1].get('view', '.')

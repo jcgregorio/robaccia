@@ -4,6 +4,7 @@ import sys
 import shutil
 import robaccia
 import string
+import getopt
 
 sys.path.insert(0, os.getcwd())
 
@@ -54,36 +55,68 @@ The target directory must not exist.
     template_dir = os.path.abspath(os.path.join(robaccia.__file__, "..", "templates", "project"))
     shutil.copytree(template_dir, name)
 
-def addview(args):
-    """robaccia addview <name>
-
-Add a new view to a project. Creates a defaultcollection
-and templates for the view.
-    """
+def _add_files(args, src_dst, src_dir):
     try:
         name = args[0]
     except:
         sys.exit("Error: Missing required parameter <name>.")
+    repr_type = 'html'
+    opts, args = getopt.getopt(args[1:], "", ["type="])
+    opts = dict(opts)
+    if '--type' in opts:
+        repr_type = opts['--type']
+        if repr_type not in robaccia.extensions.keys():
+            sys.exit("Error: %s is not a valid representation type." % repr_type)
+
     if not os.path.isdir("views"):
         sys.exit("Can't find the sub-directory 'views'.")
     if not os.path.isdir("templates"):
         sys.exit("Can't find the sub-directory 'templates'.")
-    template_dir = os.path.abspath(os.path.join(robaccia.__file__, "..", "templates", "addview"))
-    src_dst = [
-        ([template_dir, "view.py"],       ["views", name + ".py"]),
-        ([template_dir, "list.html"],     ["templates", name, "list.html"]),
-        ([template_dir, "retrieve.html"], ["templates", name, "retrieve.html"])
-            ]   
-    src_dst = [(os.path.join(*src), os.path.join(*dst)) for (src, dst) in src_dst]
 
-    for (src, dst) in src_dst:
+    template_dir = os.path.abspath(os.path.join(robaccia.__file__, "..", "templates", src_dir))
+    src_dst = [(os.path.join(template_dir, *src), os.path.join(*dst), expand) for (src, dst, expand) in src_dst]
+
+    for (src, dst, expand) in src_dst:
         if os.path.exists(dst):
             sys.exit("Error: Will not overwrite already existing file: '%s' already exists." % dst)
     if not os.path.exists(os.path.join("templates", name)):
         os.makedirs(os.path.join("templates", name))
-    for (src, dst) in src_dst:
+
+    for (src, dst, expand) in src_dst:
+        if not expand:
+            shutil.copy(src, dst)
+        else:
+            s = file(src, "r")
+            body = s.read()
+            s.close()
+            body = string.Template(body).substitute(locals())
+            d = file(dst, "wb")
+            d.write(body)
+            d.close()
         print " created %s " % dst
-        shutil.copy(src, dst)
+
+
+
+def addview(args):
+    """robaccia addview <name> [--type=<representation>]
+
+Add a new view to a project. Creates a defaultcollection
+and templates for the view.
+
+The representation can be one of: %s.
+    """ % repr(robaccia.extensions.keys())
+    try:
+        name = args[0]
+    except:
+        sys.exit("Error: Missing required parameter <name>.")
+ 
+    src_dst = [
+        (["view.py"],       ["views", name + ".py"], True),
+        (["list.html"],     ["templates", name, "list.html"], False),
+        (["retrieve.html"], ["templates", name, "retrieve.html"], False)
+            ]   
+ 
+    _add_files(args, src_dst, "addview")
 
 def addmodelview(args):
     """robaccia addmodelview <name>
@@ -96,38 +129,17 @@ model file.
         name = args[0]
     except:
         sys.exit("Error: Missing required parameter <name>.")
-    if not os.path.isdir("views"):
-        sys.exit("Can't find the sub-directory 'views'.")
-    if not os.path.isdir("templates"):
-        sys.exit("Can't find the sub-directory 'templates'.")
-    template_dir = os.path.abspath(os.path.join(robaccia.__file__, "..", "templates", "addmodelview"))
+ 
     src_dst = [
-        ([template_dir, "view.py.txt"],        ["views", name + ".py"], True),
-        ([template_dir, "model.py.txt"],       ["models", name + ".py"], True),
-        ([template_dir, "list.html"],          ["templates", name, "list.html"], False),
-        ([template_dir, "retrieve.html"],      ["templates", name, "retrieve.html"], False),
-        ([template_dir, "get_edit_form.html"], ["templates", name, "get_edit_form.html"], False),
-        ([template_dir, "get_new_form.html"],  ["templates", name, "get_new_form.html"], False)
+        (["view.py.txt"],        ["views", name + ".py"], True),
+        (["model.py.txt"],       ["models", name + ".py"], True),
+        (["list.html"],          ["templates", name, "list.html"], False),
+        (["retrieve.html"],      ["templates", name, "retrieve.html"], False),
+        (["get_edit_form.html"], ["templates", name, "get_edit_form.html"], False),
+        (["get_new_form.html"],  ["templates", name, "get_new_form.html"], False)
             ]   
-    src_dst = [(os.path.join(*src), os.path.join(*dst), expand) for (src, dst, expand) in src_dst]
 
-    for (src, dst, expand) in src_dst:
-        if os.path.exists(dst):
-            sys.exit("Error: Will not overwrite already existing file: '%s' already exists." % dst)
-    if not os.path.exists(os.path.join("templates", name)):
-        os.makedirs(os.path.join("templates", name))
-    for (src, dst, expand) in src_dst:
-        print " created %s " % dst
-        if not expand:
-            shutil.copy(src, dst)
-        else:
-            s = file(src, "r")
-            body = s.read()
-            s.close()
-            body = string.Template(body).substitute(name=name)
-            d = file(dst, "wb")
-            d.write(body)
-            d.close()
+    _add_files(args, src_dst, "addmodelview")
 
  
 def run(args):
