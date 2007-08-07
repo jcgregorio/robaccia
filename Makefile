@@ -1,4 +1,5 @@
 DOCS = wsgidispatcher.html wsgicollection.html
+PYTHONPATH=$(shell pwd)
 
 default: doc test
 

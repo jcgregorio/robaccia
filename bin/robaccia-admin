@@ -74,6 +74,9 @@ def _add_files(args, src_dst, src_dir):
         sys.exit("Can't find the sub-directory 'templates'.")
 
     template_dir = os.path.abspath(os.path.join(robaccia.__file__, "..", "templates", src_dir))
+
+    # Load up templates by extension here !!!!
+
     src_dst = [(os.path.join(template_dir, *src), os.path.join(*dst), expand) for (src, dst, expand) in src_dst]
 
     for (src, dst, expand) in src_dst:
@@ -125,6 +128,7 @@ Add a new model and associated view to a project. Creates a defaultmodelcollecti
 and templates for the view. Run 'robaccia createdb' after updating the created
 model file.
     """
+    import glob
     try:
         name = args[0]
     except:
@@ -139,6 +143,7 @@ model file.
         (["get_new_form.html"],  ["templates", name, "get_new_form.html"], False)
             ]   
 
+    glob.glob(os.path.join('tests', 'test_*.py'))
     _add_files(args, src_dst, "addmodelview")
 
  

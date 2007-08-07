@@ -2,6 +2,9 @@ import unittest
 import os
 from subprocess import Popen, PIPE
 import shutil
+import sys
+
+sys.path.insert(0, os.getcwd())
 
 SCRATCH = os.path.abspath(os.path.join("tests", "output"))
 
