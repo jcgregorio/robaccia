@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title> My Test Blog </title>
+  </head>
+  <body>
+
+  {% for entry in entries %}    
+      <h2><a href="/blog/{{ entry.key.id }}/">{{ entry.title }}</a></h2>
+      <div >
+        {{ entry.content }}
+      </div>
+  {% endfor %}
+        
+  <hr/>       
+  
+  <div>
+  <form action="" method="post">
+    <label>Title: <input type="text" name="title" value="" /><br/>
+    <label>Content: <br/>
+    <textarea name="content" rows="8" cols="40"></textarea>
+    <p><input type="submit" value="Add" /></p>
+  </form>
+  </div>      
+
+  </body>
+</html> 

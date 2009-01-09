@@ -206,9 +206,8 @@ __all__ = [
 ]
     
 import re
-import logging
 
-logger = logging.getLogger("robaccia.request")
+import logging
 
 NOMATCH = -1
 template_splitter = re.compile("([\[\]\{\}])")
@@ -341,6 +340,7 @@ class TemplatePredicate(object):
             else:
                 self.isparsed = True
         request_path = environ.get('PATH_INFO', '')
+        logging.info(request_path)
         method = environ.get('REQUEST_METHOD', 'GET')
         if not self.istemplate:
             if self.path == request_path:
@@ -391,7 +391,18 @@ class RegexPredicate(object):
         return NOMATCH
 
 
+def _404(self, environ, start_response):
+    """ The default 404 response for Dispatcher. You can pass in your
+    own app to handle 404s to __init__."""
+    start_response("404 Not Found", [('Content-Type', "text/html")])
+    return ["<h1>File Not Found</h1>"]
+
+
 class Dispatcher(object):
+
+    matchers = []
+    ranges = DEFAULT_RANGES 
+    handle404 = _404
 
     def __init__(self, handle404 = None, ranges = None):
         """
@@ -411,26 +422,16 @@ Example::
     d.add("/arc/{degrees:real}/", view.display)
 
         """
-        self.matchers = []
-        if handle404 == None:
-            self.handle404 = self._404 
-        else:
+        if handle404:
             self.handle404 = handle404
-        self.ranges = DEFAULT_RANGES 
         if ranges:
             self.ranges.update(ranges)
 
-    def _404(self, environ, start_response):
-        """ The default 404 response for Dispatcher. You can pass in your
-        own app to handle 404s to __init__."""
-        start_response("404 Not Found", [('Content-Type', "text/html")])
-        return ["<h1>File Not Found</h1>"]
 
     def __call__(self, environ, start_response):
         """An instance of a Dispatcher is a callable that is
         a WSGI application. See the module level documentation
         for an example."""
-        logger.info(environ.get('PATH_INFO', '-no path given-'))
         for predicate in self.matchers:
             ret = predicate(environ, start_response)
             if ret != NOMATCH:

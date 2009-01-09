@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title> {{ entry.title }} </title>
+  </head>
+  <body>
+
+    <h2>{{ entry.title }}</h2>
+    <div >
+      {{ entry.content }}
+    </div>
+  
+    <form action="" method="post">
+      
+    <h2><label>Title: <input type="text" name="title" value="{{ entry.title }}" /></h2>
+    <div >
+      <textarea name="content" rows="8" cols="40">{{ entry.content }}</textarea>
+    </div>
+
+    <p><input type="submit" value="Update" /></p>
+    </form>
+    <a href="/blog/{{ entry.key.id }}/">Done</a>
+
+  </body>
+</html> 
